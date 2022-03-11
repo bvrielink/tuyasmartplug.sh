@@ -3,14 +3,15 @@
 ######################################################################
 #
 # Script      : tuyasmartplug.sh
+# Git project : https://github.com/bvrielink/tuyasmartplug.sh
 # Description : Script to turn on or off a Tuya Smartplug from the
 #               command line via an API call to the OctoPrint plugin.
 #               For the status option to work you need to enable
 #               debug logging in the Tuya Smartplug plugin.
 # Arguments   : on|off|status
 # Author      : Barry Vrielink
-# Created     : 20201202
-# Version     : 0.2
+# Created     : 20220311
+# Version     : 0.3
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -34,6 +35,8 @@ case $ACTION in
         ;;
     off)
         echo "Turning Tuya Smartplug off..."
+        sync
+        sleep 3
         ${CURL_EXE} -s -H "Content-Type: application/json" -H "X-Api-Key: ${API_KEY}" -X POST -d '{ "command":"turnOff", "label":"'"${PLUGIN_LABEL}"'" }' http://${SERVER_NAME}/api/plugin/tuyasmartplug &
         exit
         ;;
@@ -45,13 +48,15 @@ case $ACTION in
             echo "Debug file not found! Enable debug logging in the plugin."
             exit 1
         fi
-        STATUS=`grep "DEBUG: Status:" ${DEBUG_FILE} | tail -1`
+        STATUS=`grep -a "DEBUG: Status:" ${DEBUG_FILE} | tail -1`
         case $STATUS in
             *True*)
                 echo "Tuya Smartplug is turned ON."
+                exit 0
                 ;;
             *False*)
                 echo "Tuya Smartplug is turned OFF."
+                exit 1
                 ;;
             *)
                 echo "Tuya Smartplug status is UNKNOWN."
